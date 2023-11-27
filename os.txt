@@ -1,0 +1,807 @@
++++++++++++++++++++++++++++++++++ fcfs.cpp ++++++++++++++++++++++++++++++++++++++++++++++++++
+/*
+fcfc scheduling algorithm with non-preemptive
+criteria is arrival time 
+so, sort the process according to arrival time if same arrival time then check pid
+*/
+#include <stdio.h>
+
+struct process
+{
+    int pid;
+    int at;
+    int bt;
+    int ct;
+    int tat;
+    int wt;
+};
+
+//input : array of process and number of process
+
+void s_input(struct process p[], int num)
+{
+    printf("Enter At and bt (separated by spaces) : \n");
+    int i;
+    for (i = 0; i < num; i++)
+    {
+        p[i].pid = i;
+        printf("For process %d : ", i);
+        scanf("%d %d", &(p[i].at), &(p[i].bt));
+    }
+}
+
+//sorting the process according to arrival time
+//if same at the check pid
+
+void s_sort(struct process p[], int num)
+{
+    int i, j;
+    struct process temp;
+    for (i = 0; i < num; i++)
+    {
+        for (j = 0; j < num - i - 1; j++)
+        {
+            if (p[j].at > p[j + 1].at)
+            {
+                temp = p[j];
+                p[j] = p[j + 1];
+                p[j + 1] = temp;
+            }
+            else if (p[j].at == p[j + 1].at)
+            {
+                if (p[j].pid > p[j + 1].pid)
+                {
+                    temp = p[j];
+                    p[j] = p[j + 1];
+                    p[j + 1] = temp;
+                }
+            }
+        }
+    }
+}
+
+//calculate completion time
+
+void s_ct(struct process p[], int num)
+{
+    int i;
+    p[0].ct = p[0].at + p[0].bt;
+
+    for (i = 1; i < num; i++)
+    {
+        if (p[i].at > p[i - 1].ct)
+        {
+            p[i].ct = p[i].at + p[i].bt;
+        }
+        else
+        {
+            p[i].ct = p[i - 1].ct + p[i].bt;
+        }
+    }
+}
+
+//calculate waiting time and turn around time
+
+void s_wt_tat(struct process p[], int num)
+{
+    int i;
+    for (i = 0; i < num; i++)
+    {
+        p[i].tat = p[i].ct - p[i].at;
+        p[i].wt = p[i].tat - p[i].bt;
+    }
+}
+
+//calculate average waiting time and average turn around time
+
+void s_avg_wt_tat(struct process p[], int num)
+{
+    int i;
+    float avg_wt = 0, avg_tat = 0;
+    for (i = 0; i < num; i++)
+    {
+        avg_wt += p[i].wt;
+        avg_tat += p[i].tat;
+    }
+    avg_wt /= num;
+    avg_tat /= num;
+    printf("Average waiting time : %.4f\n", avg_wt);
+    printf("Average turn around time : %.4f\n", avg_tat);
+}
+
+void printtable(struct process p[], int num)
+{
+    int i;
+    printf("PID\tAT\tBT\tCT\tTAT\tWT\n");
+    for (i = 0; i < num; i++)
+    {
+        printf("%d\t%d\t%d\t%d\t%d\t%d\n", p[i].pid, p[i].at, p[i].bt, p[i].ct, p[i].tat, p[i].wt);
+    }
+}
+
+int main()
+{
+    //get input in the form of arrival time and burst time
+    //get number of process make array of structure
+
+    int num = 0;
+    printf("Number of processes : ");
+    scanf("%d", &num);
+
+    struct process p[num];
+    s_input(p, num);
+
+    // sorting the process according to arrival time
+    s_sort(p, num);
+    //calculate completion time
+    s_ct(p, num);
+
+    //calculate waiting time and turn around time
+    s_wt_tat(p, num);    
+    //print the result
+    printtable(p, num);
+    //calculate average waiting time and average turn around time
+    s_avg_wt_tat(p, num);
+    return 0;
+}
+
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++  SJF ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include <iostream>
+#include <vector>
+#include <algorithm>
+
+using namespace std;
+
+// Structure to represent a job
+struct Job
+{
+    int index;           // Job index
+    int arrival_time;    // Arrival time of the job
+    int burst_time;      // Burst time (execution time) of the job
+};
+
+// Comparison function to sort jobs based on arrival time and burst time
+bool compareJobs(const Job &a, const Job &b)
+{
+    // Sort by arrival time first, and then by burst time if arrival times are equal
+    return (a.arrival_time < b.arrival_time) || (a.arrival_time == b.arrival_time && a.burst_time < b.burst_time);
+}
+
+int main()
+{
+    // Input the number of jobs
+    int N;
+    cout << "Enter the number of jobs: ";
+    cin >> N;
+
+    // Vector to store job information
+    vector<Job> jobs(N);
+
+    // Input arrival time and burst time for each job
+    for (int i = 0; i < N; ++i)
+    {
+        jobs[i].index = i;
+        cout << "Enter arrival time for job " << i << ": ";
+        cin >> jobs[i].arrival_time;
+        cout << "Enter burst time for job " << i << ": ";
+        cin >> jobs[i].burst_time;
+    }
+
+    // Sort jobs based on arrival time and burst time
+    sort(jobs.begin(), jobs.end(), compareJobs);
+
+    // Vectors to store completion time, waiting time, and turnaround time for each job
+    vector<int> completion_time(N);
+    vector<int> waiting_time(N);
+    vector<int> turn_around_time(N);
+
+    int current_time = 0;
+
+    // Calculate completion time, waiting time, and turnaround time for each job
+    for (int i = 0; i < N; ++i)
+    {
+        int job_index = jobs[i].index;
+        int arrival_time = jobs[i].arrival_time;
+        int burst_time = jobs[i].burst_time;
+
+        // If current time is less than arrival time, update current time to arrival time
+        if (current_time < arrival_time)
+        {
+            current_time = arrival_time;
+        }
+
+        // Calculate completion time, turnaround time, and waiting time
+        completion_time[job_index] = current_time + burst_time;
+        turn_around_time[job_index] = completion_time[job_index] - arrival_time;
+        waiting_time[job_index] = turn_around_time[job_index] - burst_time;
+
+        // Update current time to the completion time of the current job
+        current_time = completion_time[job_index];
+    }
+
+    // Calculate average waiting time and average turnaround time
+    double average_waiting_time = 0.0;
+    double average_turn_around_time = 0.0;
+
+    for (int i = 0; i < N; ++i)
+    {
+        average_waiting_time += waiting_time[i];
+        average_turn_around_time += turn_around_time[i];
+    }
+
+    average_waiting_time /= N;
+    average_turn_around_time /= N;
+
+    // Display the output in rows and columns with appropriate labels
+    cout << "Job\tAT\tBT\tCT\tWT\tTAT\n";
+    for (int i = 0; i < N; ++i)
+    {
+        cout << jobs[i].index << "\t" << jobs[i].arrival_time << "\t" << jobs[i].burst_time << "\t" << completion_time[i] << "\t" << waiting_time[i] << "\t" << turn_around_time[i] << endl;
+    }
+
+    // Display average waiting time and average turnaround time
+    cout << "Average Waiting Time: " << average_waiting_time << endl;
+    cout << "Average Turnaround Time: " << average_turn_around_time << endl;
+
+    return 0;
+}
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   STRF     ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include <iostream>
+#include <vector>
+#include <limits>
+using namespace std;
+
+// Structure to represent a process
+struct Process
+{
+    int id;                 // Process ID
+    int arrival_time;       // Arrival time of the process
+    int burst_time;         // Burst time (execution time) of the process
+    int waiting_time;       // Waiting time of the process
+    int completion_time;    // Completion time of the process
+    int turnaround_time;    // Turnaround time of the process
+    int remaining_time;     // Remaining burst time of the process
+};
+
+int main()
+{
+    int n;
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    vector<Process> processes(n);
+
+    // Input process details
+    for (int i = 0; i < n; i++)
+    {
+        processes[i].id = i + 1;
+        cout << "Enter arrival time of P" << i + 1 << ": ";
+        cin >> processes[i].arrival_time;
+        cout << "Enter burst time of P" << i + 1 << ": ";
+        cin >> processes[i].burst_time;
+        processes[i].remaining_time = processes[i].burst_time;
+    }
+
+    int complete = 0, t = 0;
+
+    while (complete != n)
+    {
+        int shortest = -1;
+        int min_remaining_time = numeric_limits<int>::max();
+
+        // Find the process with the shortest remaining time that has arrived
+        for (int j = 0; j < n; j++)
+        {
+            if (processes[j].arrival_time <= t && processes[j].remaining_time < min_remaining_time && processes[j].remaining_time > 0)
+            {
+                min_remaining_time = processes[j].remaining_time;
+                shortest = j;
+            }
+        }
+
+        if (shortest == -1)
+        {
+            // No process is ready to execute, move to the next time unit
+            t++;
+            continue;
+        }
+
+        // Execute the process for one time unit
+        processes[shortest].remaining_time--;
+        t++;
+
+        if (processes[shortest].remaining_time == 0)
+        {
+            // Process has completed, update its completion time and calculate waiting and turnaround time
+            complete++;
+            processes[shortest].completion_time = t;
+            processes[shortest].waiting_time = processes[shortest].completion_time - processes[shortest].arrival_time - processes[shortest].burst_time;
+            if (processes[shortest].waiting_time < 0)
+                processes[shortest].waiting_time = 0;
+            processes[shortest].turnaround_time = processes[shortest].burst_time + processes[shortest].waiting_time;
+        }
+    }
+
+    // Calculate total waiting time and total turnaround time
+    int total_waiting_time = 0, total_turnaround_time = 0;
+
+    // Display process details and calculate totals
+    cout << "Processes\tArrival time\tBurst time\tWaiting time\tCompletion time\tTurnaround time\n";
+    for (int i = 0; i < n; i++)
+    {
+        total_waiting_time += processes[i].waiting_time;
+        total_turnaround_time += processes[i].turnaround_time;
+        cout << "P" << processes[i].id << "\t\t" << processes[i].arrival_time << "\t\t" << processes[i].burst_time << "\t\t" << processes[i].waiting_time << "\t\t" << processes[i].completion_time << "\t\t" << processes[i].turnaround_time << endl;
+    }
+
+    // Display average waiting time and average turnaround time
+    cout << "\nAverage waiting time = " << (float)total_waiting_time / (float)n;
+    cout << "\nAverage turnaround time = " << (float)total_turnaround_time / (float)n;
+
+    return 0;
+}
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++   RR ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include <iostream>
+#include <queue>
+#include <climits>
+using namespace std;
+
+int main()
+{
+    int at[10], bt[10], rt[10];
+    int Waiting[10], Turn_Around[10], Completion[10];
+    int jobSequence[10];
+    int n, timeQuantum;
+
+    cout << "Enter the number of jobs: ";
+    cin >> n;
+
+    cout << "Enter time quantum: ";
+    cin >> timeQuantum;
+
+    cout << "Enter arrival time of each process: ";
+    for (int i = 0; i < n; i++)
+        cin >> at[i];
+
+    cout << "Enter burst time of each process: ";
+    for (int i = 0; i < n; i++)
+    {
+        cin >> bt[i];
+        rt[i] = bt[i];
+    }
+
+    queue<int> readyQueue;
+    int currentTime = 0;
+    int completedJobs = 0;
+
+    while (completedJobs < n)
+    {
+        for (int i = 0; i < n; i++)
+        {
+            if (at[i] <= currentTime && rt[i] > 0)
+            {
+                int executeTime = min(timeQuantum, rt[i]);
+                currentTime += executeTime;
+                rt[i] -= executeTime;
+
+                if (rt[i] == 0)
+                {
+                    completedJobs++;
+                    Completion[i] = currentTime;
+                    Turn_Around[i] = Completion[i] - at[i];
+                    Waiting[i] = Turn_Around[i] - bt[i];
+                    jobSequence[completedJobs - 1] = i + 1;
+                }
+
+                readyQueue.push(i);
+            }
+        }
+
+        if (!readyQueue.empty())
+        {
+            int nextJob = readyQueue.front();
+            readyQueue.pop();
+            readyQueue.push(nextJob);
+        }
+        else
+        {
+            int nextArrival = INT_MAX;
+            for (int i = 0; i < n; i++)
+            {
+                if (rt[i] > 0 && at[i] < nextArrival)
+                    nextArrival = at[i];
+            }
+            currentTime = nextArrival;
+        }
+    }
+
+    cout << "\n\nJob Sequence: ";
+    for (int i = 0; i < n; i++)
+    {
+        cout << "P" << jobSequence[i];
+        if (i != n - 1)
+            cout << " ";
+    }
+
+    cout << "\n\nJob\tArrival Time\tBurst Time\tCompletion Time\tWaiting Time\tTurn Around Time\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << "P" << i + 1 << "\t" << at[i] << "\t\t" << bt[i] << "\t\t" << Completion[i] << "\t\t" << Waiting[i] << "\t\t" << Turn_Around[i] << endl;
+    }
+
+    double wait = 0, turn = 0;
+    for (int i = 0; i < n; i++)
+    {
+        wait += Waiting[i];
+        turn += Turn_Around[i];
+    }
+
+    cout << "\nTotal Waiting Time = " << wait;
+    cout << "\nAverage Waiting Time = " << wait / n;
+    cout << "\nTotal Turnaround Time = " << turn;
+    cout << "\nAverage Turnaround Time = " << turn / n << endl;
+
+    return 0;
+}
+
+
+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ Prority +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include <iostream>
+using namespace std;
+int main()
+{
+    int Arrival_Time[10], Burst_Time[10], Burst_Time_1[10];
+    int Waiting[10], Turn_Around[10], Completion[10], Priority[10];
+    int jobSequence[10];
+    int i, j, smallest, count = 0, time, n;
+    double wait = 0, turn = 0, end;
+
+    cout << "Enter the number of jobs: ";
+    cin >> n;
+
+    cout << "Enter arrival time of each process: ";
+    for (i = 0; i < n; i++)
+        cin >> Arrival_Time[i];
+
+    cout << "Enter burst time of each process: ";
+    for (i = 0; i < n; i++)
+        cin >> Burst_Time[i];
+
+    cout << "Enter priority of each process: ";
+    for (i = 0; i < n; i++)
+        cin >> Priority[i];
+
+    for (i = 0; i < n; i++)
+        Burst_Time_1[i] = Burst_Time[i];
+
+    Priority[9] = -1;
+    for (time = 0; count != n; time++)
+    {
+        smallest = 9;
+        for (i = 0; i < n; i++)
+            if (Arrival_Time[i] <= time && Priority[i] > Priority[smallest] && Burst_Time[i] > 0)
+                smallest = i;
+        Burst_Time[smallest]--;
+
+        if (Burst_Time[smallest] == 0)
+        {
+            count++;
+            end = time + 1;
+            Completion[smallest] = end;
+            Waiting[smallest] = end - Arrival_Time[smallest] - Burst_Time_1[smallest];
+            Turn_Around[smallest] = end - Arrival_Time[smallest];
+            jobSequence[count - 1] = smallest + 1;
+        }
+    }
+
+    cout << "\n\nJob Sequence: ";
+    for (i = 0; i < n; i++)
+    {
+        cout << "P" << jobSequence[i];
+        if (i != n - 1)
+            cout << " ";
+    }
+
+    cout << "\n\nJob\tArrival Time\tBurst Time\tPriority\tCompletion Time\tWaiting Time\tTurn Around Time\n";
+    for (i = 0; i < n; i++)
+    {
+        cout << "P" << i + 1 << "\t" << Arrival_Time[i] << "\t\t" << Burst_Time_1[i] << "\t\t" << Priority[i] << "\t\t" << Completion[i] << "\t\t" << Waiting[i] << "\t\t" << Turn_Around[i] << endl;
+        wait = wait + Waiting[i];
+        turn = turn + Turn_Around[i];
+    }
+
+    cout << "\nTotal Waiting Time = " << wait;
+    cout << "\nAverage Waiting Time = " << wait / n;
+    cout << "\nTotal Turnaround Time = " << turn;
+    cout << "\nAverage Turnaround Time = " << turn / n << endl;
+
+    return 0;
+}
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ Banker +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+#include <iostream>
+using namespace std;
+
+int main()
+{
+    int process, resources, i, j, k;
+
+    cout << "Number of processes: ";
+    cin >> process;
+
+    cout << "Number of resources: ";
+    cin >> resources;
+
+    // Allocation Matrix
+    int alloc[process][resources];
+    cout << "Allocation Matrix:" << endl;
+    for (i = 0; i < process; i++)
+        for (j = 0; j < resources; j++)
+            cin >> alloc[i][j];
+
+    // MAX Matrix
+    int max[process][resources];
+    cout << "Max Matrix:" << endl;
+    for (i = 0; i < process; i++)
+        for (j = 0; j < resources; j++)
+            cin >> max[i][j];
+
+    // Available Resources
+    int avail[resources];
+    cout << "Available Resources:" << endl;
+    for (j = 0; j < resources; j++)
+    {
+        cin >> avail[j];
+    }
+
+    int f[process], ans[process], ind = 0;
+
+    for (k = 0; k < process; k++)
+    {
+        f[k] = 0;
+    }
+
+    // Need Matrix
+    int need[process][resources];
+    for (i = 0; i < process; i++)
+    {
+        for (j = 0; j < resources; j++)
+            need[i][j] = max[i][j] - alloc[i][j];
+    }
+
+    int y = 0;
+    for (k = 0; k < process; k++)
+    {
+        for (i = 0; i < process; i++)
+        {
+            if (f[i] == 0)
+            {
+                int flag = 0;
+                for (j = 0; j < resources; j++)
+                {
+                    if (need[i][j] > avail[j])
+                    {
+                        flag = 1;
+                        break;
+                    }
+                }
+
+                if (flag == 0)
+                {
+                    ans[ind++] = i;
+                    for (y = 0; y < resources; y++)
+                        avail[y] += alloc[i][y];
+                    f[i] = 1;
+                }
+            }
+        }
+    }
+
+    cout << "Alloc Matrix\tMax Matrix\tNeed Matrix" << endl;
+    for (i = 0; i < process; i++)
+    {
+        for (j = 0; j < resources; j++)
+        {
+            cout << alloc[i][j] << " ";
+        }
+        cout << "\t\t";
+        for (j = 0; j < resources; j++)
+        {
+            cout << max[i][j] << " ";
+        }
+        cout << "\t\t";
+        for (j = 0; j < resources; j++)
+        {
+            cout << need[i][j] << " ";
+        }
+        cout << endl;
+    }
+
+    int flag = 1;
+
+    for (int i = 0; i < process; i++)
+    {
+        if (f[i] == 0)
+        {
+            flag = 0;
+            cout << "The given sequence is not safe";
+            break;
+        }
+    }
+
+    if (flag == 1)
+    {
+        cout << "Following is the Safe Sequence" << endl;
+        for (i = 0; i < process - 1; i++)
+            cout << " P" << ans[i] << " ->";
+        cout << " P" << ans[process - 1] << endl;
+    }
+
+    return (0);
+}
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++ fit +++++++++++++++++++++++++++++++++++++++++++++++
+
+
+#include <bits/stdc++.h>
+using namespace std;
+
+void firstFit(int blockSize[], int m, int processSize[], int n)
+{
+    int allocation[n];
+    memset(allocation, -1, sizeof(allocation));
+
+    for (int i = 0; i < n; i++)
+    {
+        for (int j = 0; j < m; j++)
+        {
+            if (blockSize[j] >= processSize[i])
+            {
+                allocation[i] = j;
+                blockSize[j] -= processSize[i];
+                break;
+            }
+        }
+    }
+
+    cout << "\nProcess No.\tProcess Size\tBlock no.\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << " " << i + 1 << "\t\t" << processSize[i] << "\t\t";
+        if (allocation[i] != -1)
+            cout << allocation[i] + 1;
+        else
+            cout << "Not Allocated";
+        cout << endl;
+    }
+}
+
+void bestFit(int blockSize[], int m, int processSize[], int n)
+{
+    int allocation[n];
+
+    for (int i = 0; i < n; i++)
+        allocation[i] = -1;
+
+    for (int i = 0; i < n; i++)
+    {
+        int bestIdx = -1;
+        for (int j = 0; j < m; j++)
+        {
+            if (blockSize[j] >= processSize[i])
+            {
+                if (bestIdx == -1)
+                    bestIdx = j;
+                else if (blockSize[bestIdx] > blockSize[j])
+                    bestIdx = j;
+            }
+        }
+
+        if (bestIdx != -1)
+        {
+            allocation[i] = bestIdx;
+            blockSize[bestIdx] -= processSize[i];
+        }
+    }
+
+    cout << "\nProcess No.\tProcess Size\tBlock no.\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << " " << i + 1 << "\t\t" << processSize[i] << "\t\t";
+        if (allocation[i] != -1)
+            cout << allocation[i] + 1;
+        else
+            cout << "Not Allocated";
+        cout << endl;
+    }
+}
+
+void worstFit(int blockSize[], int m, int processSize[], int n)
+{
+    int allocation[n];
+    memset(allocation, -1, sizeof(allocation));
+
+    for (int i = 0; i < n; i++)
+    {
+        int wstIdx = -1;
+        for (int j = 0; j < m; j++)
+        {
+            if (blockSize[j] >= processSize[i])
+            {
+                if (wstIdx == -1)
+                    wstIdx = j;
+                else if (blockSize[wstIdx] < blockSize[j])
+                    wstIdx = j;
+            }
+        }
+
+        if (wstIdx != -1)
+        {
+            allocation[i] = wstIdx;
+            blockSize[wstIdx] -= processSize[i];
+        }
+    }
+
+    cout << "\nProcess No.\tProcess Size\tBlock no.\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << " " << i + 1 << "\t\t" << processSize[i] << "\t\t";
+        if (allocation[i] != -1)
+            cout << allocation[i] + 1;
+        else
+            cout << "Not Allocated";
+        cout << endl;
+    }
+}
+
+int main()
+{
+    int m, n;
+
+    cout << "Enter the number of memory partitions: ";
+    cin >> m;
+
+    int blockSize[m];
+    cout << "Enter the sizes of memory partitions:\n";
+    for (int i = 0; i < m; i++)
+    {
+        cout << "Partition " << i + 1 << ": ";
+        cin >> blockSize[i];
+    }
+
+    cout << "Enter the number of processes: ";
+    cin >> n;
+
+    int processSize[n];
+    cout << "Enter the sizes of processes:\n";
+    for (int i = 0; i < n; i++)
+    {
+        cout << "Process " << i + 1 << ": ";
+        cin >> processSize[i];
+    }
+
+    cout << "\nFirst Fit Allocation:\n";
+    firstFit(blockSize, m, processSize, n);
+
+    cout << "\nBest Fit Allocation:\n";
+    bestFit(blockSize, m, processSize, n);
+
+    cout << "\nWorst Fit Allocation:\n";
+    worstFit(blockSize, m, processSize, n);
+
+    return 0;
+}
